@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Network Assessment Report</title>
+</head>
+<body>
+    <h1>Open Security Groups</h1>
+    <table border="1">
+        <tr>
+            <th>Account ID</th><th>Region</th><th>Group ID</th><th>Name</th><th>Port</th><th>Protocol</th><th>Description</th>
+        </tr>
+        {% for item in security_findings %}
+        <tr>
+            <td>{{ item.AccountId }}</td>
+            <td>{{ item.Region }}</td>
+            <td>{{ item.GroupId }}</td>
+            <td>{{ item.GroupName }}</td>
+            <td>{{ item.Port }}</td>
+            <td>{{ item.Protocol }}</td>
+            <td>{{ item.Description }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

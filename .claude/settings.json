@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m py_compile auditor/utils/aws_utils.py auditor/modules/iam_audit.py auditor/modules/exposure_audit.py auditor/modules/network_assessment.py auditor/modules/cloudtrail_guardduty.py auditor/modules/cost_optimization.py auditor/modules/aws_cyber_audit.py auditor/modules/security_best_practices.py auditor/modules/orchestrator.py auditor/modules/report_generator.py auditor/modules/audit_config.py auditor/main.py)",
+      "Bash(python3 -m pip install pyflakes -q)",
+      "Bash(python3 -m pyflakes auditor/utils/aws_utils.py auditor/modules/iam_audit.py auditor/modules/exposure_audit.py auditor/modules/network_assessment.py auditor/modules/cloudtrail_guardduty.py auditor/modules/cost_optimization.py auditor/modules/aws_cyber_audit.py auditor/modules/security_best_practices.py auditor/modules/orchestrator.py auditor/modules/report_generator.py auditor/modules/audit_config.py auditor/main.py)",
+      "Bash(sed -n '85,95p' auditor/main.py)",
+      "Bash(sed -n '244,252p' auditor/main.py)",
+      "Bash(python3 -m pytest auditor/tests/ -q)"
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+# Sensitive config — keep local only
+auditor/config.yaml
+
+# Audit output — may contain real AWS account data
+auditor/reports/
+auditor/.audit.lock
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Environment / secrets
+.env
+.env.*
+*.secret
+
+# IDE
+.idea/
+
+# JS dependencies
+node_modules/
+package-lock.json
+
+# Files containing real AWS account IDs — keep local only
+auditrole_stackset_template_old.yaml
+organizational-units-for-parent*

@@ -1,0 +1,10 @@
+boto3
+fpdf==1.7.2
+streamlit
+pandas
+matplotlib
+numpy
+pyyaml
+pandas
+plotly
+tenacity

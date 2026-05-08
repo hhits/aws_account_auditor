@@ -1,0 +1,200 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM Role for cross-account auditing from a central audit account.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Audit Role Configuration
+        Parameters:
+          - AuditAccountId
+          - RoleName
+    ParameterLabels:
+      AuditAccountId:
+        default: Centralized Audit Account ID
+      RoleName:
+        default: Audit Role Name
+
+Parameters:
+  AuditAccountId:
+    Type: String
+    Description: AWS Account ID of the centralized audit account
+    AllowedPattern: '^\d{12}$'
+    ConstraintDescription: Must be a 12-digit AWS account ID
+    Default: '123456789012'
+  RoleName:
+    Type: String
+    Description: Name of the audit role to be created
+    Default: AuditRole
+    AllowedPattern: '^[a-zA-Z0-9-_]+$'
+    ConstraintDescription: Must be a valid IAM role name
+
+Resources:
+  AuditRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AuditAccountId}:role/AuditDeployer'
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: audit-access
+      Path: /
+      Description: Role for cross-account auditing by AuditDeployer
+      MaxSessionDuration: 3600
+      Tags:
+        - Key: Name
+          Value: AuditRole
+        - Key: Purpose
+          Value: Audit
+      Policies:
+        - PolicyName: EC2AndNetworkAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeVolumes
+                  - ec2:DescribeImages
+                  - ec2:DescribeSnapshots
+                  - ec2:DescribeSnapshotAttribute
+                  - ec2:DescribeRouteTables
+                  - ec2:DescribeVpcs
+                  - ec2:DescribeFlowLogs
+                  - ec2:DescribeNetworkAcls
+                  - cloudwatch:GetMetricStatistics
+                Resource: '*'
+        - PolicyName: IAMAndKMSAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:GetUser
+                  - iam:ListUsers
+                  - iam:GetRole
+                  - iam:ListRoles
+                  - iam:GetPolicy
+                  - iam:ListPolicies
+                  - iam:GetPolicyVersion
+                  - iam:ListMFADevices
+                  - iam:GetAccountSummary
+                  - iam:GenerateCredentialReport
+                  - iam:GetCredentialReport
+                  - kms:ListKeys
+                  - kms:GetKeyPolicy
+                  - kms:GetKeyRotationStatus
+                Resource: '*'
+        - PolicyName: S3AndCloudTrailAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                  - s3:ListAllMyBuckets
+                  - s3:GetBucketPolicyStatus
+                  - s3:GetBucketAcl
+                  - s3:GetBucketEncryption
+                  - s3:GetPublicAccessBlock
+                  - s3:GetBucketPublicAccessBlock
+                  - s3:GetEncryptionConfiguration
+                  - cloudtrail:DescribeTrails
+                  - cloudtrail:GetTrailStatus
+                  - cloudtrail:LookupEvents
+                Resource: '*'
+        - PolicyName: GuardDutyAndSecurityHubAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - guardduty:ListDetectors
+                  - guardduty:GetDetector
+                  - guardduty:ListFindings
+                  - guardduty:GetFindings
+                  - securityhub:DescribeHub
+                  - securityhub:GetEnabledStandards
+                  - securityhub:GetFindings
+                Resource: '*'
+        - PolicyName: CostAndOtherServicesAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ce:GetCostAndUsage
+                  - ce:GetReservationUtilization
+                  - config:GetComplianceDetailsByConfigRule
+                  - config:GetComplianceDetailsByResource
+                  - config:DescribeConfigurationRecorders
+                  - config:DescribeConfigurationRecorderStatus
+                  - organizations:DescribeAccount
+                  - organizations:DescribeOrganization
+                  - organizations:DescribeOrganizationalUnit
+                  - support:DescribeCases
+                  - support:DescribeCommunications
+                  - health:DescribeEvents
+                  - health:DescribeEventDetails
+                  - pricing:GetProducts
+                Resource: '*'
+        - PolicyName: ELBAndRDSServicesAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - elasticloadbalancing:DescribeLoadBalancers
+                  - elasticloadbalancing:DescribeListeners
+                  - elasticloadbalancing:DescribeListenerAttributes
+                  - rds:DescribeDBInstances
+                  - rds:DescribeDBSnapshots
+                  - rds:DescribeDBSnapshotAttributes
+                Resource: '*'
+        - PolicyName: CloudFrontAndAPIGatewayAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudfront:ListDistributions
+                  - apigateway:GetRestApis
+                  - apigateway:GetStages
+                  - apigateway:GetResources
+                Resource: '*'
+        - PolicyName: LambdaAndMacieAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:ListFunctions
+                  - lambda:GetFunctionUrlConfig
+                  - macie2:GetMacieSession
+                Resource: '*'
+        - PolicyName: EKSAudit
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - eks:ListClusters
+                  - eks:DescribeCluster
+                Resource: '*'
+
+Outputs:
+  RoleArn:
+    Value: !GetAtt AuditRole.Arn
+    Description: ARN of the audit role deployed to each account
+  RoleName:
+    Value: !Ref AuditRole
+    Description: Name of the audit role deployed to each account

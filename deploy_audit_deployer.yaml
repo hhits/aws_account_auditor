@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM role to allow audit deployment with CloudFormation and IAM permissions
+
+Resources:
+  AuditDeployerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AuditDeployer
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "*"  # Or restrict to the specific root or org
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:PrincipalOrgID: "d-906784e9f9"  # Replace with your actual Org ID
+      Policies:
+        - PolicyName: CFNAuditDeployPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:*
+                  - iam:*
+                  - sts:AssumeRole
+                Resource: "*"
