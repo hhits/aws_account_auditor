@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Creates the AuditDeployer role in your management account that allows the
+  AWS Account Auditor SaaS platform to perform cross-account security audits.
+  Deploy this to your management account only. Then deploy auditrole_stackset_template.yaml
+  to every sub-account via StackSet.
+
+Parameters:
+  SaaSAwsAccountId:
+    Type: String
+    Description: AWS Account ID of the Auditor SaaS platform (provided by the service)
+    AllowedPattern: '^\d{12}$'
+    ConstraintDescription: Must be a 12-digit AWS account ID
+
+  DeployerExternalId:
+    Type: String
+    Description: >
+      Secret string that you will also enter in the SaaS settings page.
+      Acts as a second factor to prevent confused-deputy attacks.
+    MinLength: 8
+
+  AuditRoleExternalId:
+    Type: String
+    Description: ExternalId used when assuming AuditRole in sub-accounts (must match your StackSet deployment)
+    Default: audit-access
+
+Resources:
+  AuditDeployerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AuditDeployer
+      Description: Allows the Auditor SaaS platform to assume AuditRole in sub-accounts
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${SaaSAwsAccountId}:root'
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref DeployerExternalId
+      MaxSessionDuration: 3600
+      Policies:
+        - PolicyName: AssumeAuditRoleInSubAccounts
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Sub 'arn:aws:iam::*:role/AuditRole'
+                Condition:
+                  StringEquals:
+                    sts:ExternalId: !Ref AuditRoleExternalId
+              - Effect: Allow
+                Action:
+                  - organizations:ListAccounts
+                  - organizations:DescribeOrganization
+                Resource: '*'
+
+Outputs:
+  DeployerRoleArn:
+    Value: !GetAtt AuditDeployerRole.Arn
+    Description: Paste this ARN into the Auditor SaaS Settings → Deployer Role ARN field
