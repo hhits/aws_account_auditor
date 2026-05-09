@@ -41,3 +41,6 @@ package-lock.json
 # Files containing real AWS account IDs — keep local only
 auditrole_stackset_template_old.yaml
 organizational-units-for-parent*
+
+# Redis dump
+dump.rdb

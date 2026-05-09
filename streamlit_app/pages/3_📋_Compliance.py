@@ -2,6 +2,7 @@ import sys, os
 _LIB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'lib')
 if _LIB not in sys.path:
     sys.path.insert(0, _LIB)
+_LOGO = os.path.normpath(os.path.join(_LIB, "..", "..", "auditor", "assets", "logo.png"))
 import streamlit as st
 import plotly.graph_objects as go
 import db
@@ -21,7 +22,10 @@ if not db.is_logged_in():
     st.switch_page("app.py")
 
 with st.sidebar:
-    st.markdown("### 🛡️ AWS Auditor")
+    if os.path.exists(_LOGO):
+        st.image(_LOGO, use_container_width=True)
+    else:
+        st.markdown("### 🛡️ AWS Auditor")
     st.markdown(f"**{st.session_state.get('user_email','')}**")
     st.divider()
     if st.button("Sign out", use_container_width=True):

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AWS Account Auditor",
-  description: "Multi-account AWS security auditing SaaS",
+  description: "AWS Multi-account security auditing SaaS",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
