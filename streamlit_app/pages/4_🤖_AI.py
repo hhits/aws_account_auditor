@@ -32,6 +32,10 @@ st.markdown("""
 </div>""", unsafe_allow_html=True)
 
 # ── AI status ─────────────────────────────────────────────────────────────────
+# Debug: show whether the key is being read
+_key_preview = ai_client._groq_key()
+if _key_preview:
+    st.caption(f"🔑 Groq key detected: `{_key_preview[:8]}...`")
 ai_ok, ai_msg = ai_client.is_available()
 if ai_ok:
     icon = "☁️" if "Groq" in ai_msg else "💻"
