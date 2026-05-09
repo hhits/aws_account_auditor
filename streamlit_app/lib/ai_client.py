@@ -22,22 +22,26 @@ TIMEOUT = 120
 
 
 def _groq_key() -> str:
-    """Read Groq API key from Streamlit secrets or env."""
-    # Try environment variable first (always works)
-    env_key = os.environ.get("GROQ_API_KEY", "")
-    if env_key:
-        return env_key
+    """Read Groq API key — checks env, all secret locations, and common TOML mistakes."""
+    if os.environ.get("GROQ_API_KEY"):
+        return os.environ["GROQ_API_KEY"]
     try:
         import streamlit as st
-        # Direct bracket access is more reliable than .get() on AttrDict
-        try:
-            return str(st.secrets["GROQ_API_KEY"])
-        except (KeyError, AttributeError):
-            pass
-        try:
-            return str(st.secrets["groq"]["api_key"])
-        except (KeyError, AttributeError):
-            pass
+        for path in (
+            ("GROQ_API_KEY",),          # top-level (correct placement)
+            ("aws", "GROQ_API_KEY"),    # under [aws] section (common TOML mistake)
+            ("groq", "api_key"),        # under [groq] section
+            ("groq", "GROQ_API_KEY"),
+        ):
+            try:
+                obj = st.secrets
+                for part in path:
+                    obj = obj[part]
+                val = str(obj).strip()
+                if val:
+                    return val
+            except (KeyError, AttributeError):
+                continue
     except Exception:
         pass
     return ""

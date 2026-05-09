@@ -13,6 +13,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+db.restore_session()
 if not db.is_logged_in():
     st.switch_page("app.py")
 

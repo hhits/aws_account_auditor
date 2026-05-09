@@ -16,6 +16,77 @@ try:
 except ImportError:
     _HAS_SUPABASE = False
 
+# ── Cookie-based session persistence ─────────────────────────────────────────
+
+_COOKIE_TTL = 7 * 24 * 3600  # 7 days
+
+
+def _cookies():
+    """Return a CookieController, creating it once per session."""
+    if "aws_audit_cc" not in st.session_state:
+        try:
+            from streamlit_cookies_controller import CookieController
+            st.session_state["aws_audit_cc"] = CookieController(key="aws_audit")
+        except Exception:
+            st.session_state["aws_audit_cc"] = None
+    return st.session_state["aws_audit_cc"]
+
+
+def _save_cookies(uid: str, email: str, refresh: str) -> None:
+    cc = _cookies()
+    if not cc:
+        return
+    try:
+        cc.set("u", uid,     max_age=_COOKIE_TTL)
+        cc.set("e", email,   max_age=_COOKIE_TTL)
+        cc.set("r", refresh, max_age=_COOKIE_TTL)
+    except Exception:
+        pass
+
+
+def _clear_cookies() -> None:
+    cc = _cookies()
+    if not cc:
+        return
+    for k in ("u", "e", "r"):
+        try:
+            cc.remove(k)
+        except Exception:
+            pass
+
+
+def restore_session() -> bool:
+    """Try to restore auth session from browser cookies. Call at top of each page."""
+    if is_logged_in():
+        return True
+    cc = _cookies()
+    if not cc:
+        return False
+    try:
+        uid = cc.get("u")
+        if not uid:
+            return False
+        refresh = cc.get("r") or ""
+        if refresh:
+            try:
+                resp = _anon_client().auth.refresh_session(refresh)
+                if resp and resp.session:
+                    st.session_state["user_id"]      = resp.user.id
+                    st.session_state["user_email"]   = resp.user.email
+                    st.session_state["access_token"] = resp.session.access_token
+                    _save_cookies(resp.user.id, resp.user.email,
+                                  resp.session.refresh_token or "")
+                    return True
+            except Exception:
+                pass
+        # Fallback: trust stored uid/email directly
+        st.session_state["user_id"]    = uid
+        st.session_state["user_email"] = cc.get("e") or ""
+        st.session_state["access_token"] = ""
+        return True
+    except Exception:
+        return False
+
 
 def _secrets(key: str, default: str = "") -> str:
     """Read from st.secrets (Streamlit Cloud) or environment variables (local)."""
@@ -58,13 +129,16 @@ def login(email: str, password: str) -> tuple[bool, str]:
         st.session_state["user_id"]      = result.user.id
         st.session_state["user_email"]   = result.user.email
         st.session_state["access_token"] = session.access_token
+        _save_cookies(result.user.id, result.user.email,
+                      session.refresh_token or "")
         return True, ""
     except Exception as exc:
         return False, str(exc)
 
 
 def logout():
-    for key in ("user_id", "user_email", "access_token"):
+    _clear_cookies()
+    for key in ("user_id", "user_email", "access_token", "aws_audit_cc"):
         st.session_state.pop(key, None)
 
 
