@@ -1,10 +1,11 @@
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
+_LIB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'lib')
+if _LIB not in sys.path:
+    sys.path.insert(0, _LIB)
 import time
 import streamlit as st
 import plotly.graph_objects as go
-from streamlit_app.lib import db, audit_runner, ai_client
+import db, audit_runner, ai_client
 
 st.set_page_config(page_title="Dashboard · AWS Auditor", page_icon="🛡️", layout="wide")
 

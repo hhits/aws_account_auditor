@@ -3,13 +3,11 @@ Entry point for Streamlit Community Cloud.
 Run locally:  streamlit run streamlit_app/app.py
 """
 import sys, os
-# Insert repo root so both `streamlit_app` and `auditor` packages resolve
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
+_LIB = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lib')
+if _LIB not in sys.path:
+    sys.path.insert(0, _LIB)
 import streamlit as st
-from streamlit_app.lib import db
+import db
 
 st.set_page_config(
     page_title="AWS Security Auditor",
