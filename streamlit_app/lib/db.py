@@ -56,12 +56,26 @@ def _clear_cookies() -> None:
 
 
 def restore_session() -> bool:
-    """Try to restore auth session from browser cookies. Call at top of each page."""
+    """Try to restore auth session from browser cookies. Call at top of each page.
+
+    CookieController is a JavaScript component — after a page refresh the
+    WebSocket reconnects and session_state is cleared.  The component needs
+    exactly ONE render cycle before its .get() calls return real values.
+    We trigger that single forced rerun here and bail out; on the next render
+    (still the same WebSocket session, so state is preserved) cookies are live.
+    """
     if is_logged_in():
         return True
+
     cc = _cookies()
     if not cc:
         return False
+
+    # First render after reconnect: let the JS component initialise, then rerun.
+    if "cookie_init" not in st.session_state:
+        st.session_state["cookie_init"] = True
+        st.rerun()
+
     try:
         uid = cc.get("u")
         if not uid:
@@ -79,9 +93,10 @@ def restore_session() -> bool:
                     return True
             except Exception:
                 pass
-        # Fallback: trust stored uid/email directly
-        st.session_state["user_id"]    = uid
-        st.session_state["user_email"] = cc.get("e") or ""
+        # Fallback: trust stored uid/email without a live access_token.
+        # DB writes that require auth will re-authenticate lazily.
+        st.session_state["user_id"]      = uid
+        st.session_state["user_email"]   = cc.get("e") or ""
         st.session_state["access_token"] = ""
         return True
     except Exception:
@@ -131,6 +146,7 @@ def login(email: str, password: str) -> tuple[bool, str]:
         st.session_state["access_token"] = session.access_token
         _save_cookies(result.user.id, result.user.email,
                       session.refresh_token or "")
+        st.session_state["cookie_init"] = True   # cookies already available this session
         return True, ""
     except Exception as exc:
         return False, str(exc)
@@ -138,7 +154,7 @@ def login(email: str, password: str) -> tuple[bool, str]:
 
 def logout():
     _clear_cookies()
-    for key in ("user_id", "user_email", "access_token", "aws_audit_cc"):
+    for key in ("user_id", "user_email", "access_token", "aws_audit_cc", "cookie_init"):
         st.session_state.pop(key, None)
 
 
