@@ -81,7 +81,7 @@ section[data-testid="stMain"] > div:first-child { padding:0 !important; }
 [data-testid="stAppViewContainer"],
 section[data-testid="stMain"] { background:#0b1628 !important; }
 
-/* Left column: add comfortable padding and vertical centering */
+/* Left column: comfortable padding and vertical layout */
 div[data-testid="stColumn"]:not(:has([data-testid="stForm"])) > div:first-child {
     padding:4rem 3rem 3rem 4rem !important;
     display:flex;
@@ -90,11 +90,19 @@ div[data-testid="stColumn"]:not(:has([data-testid="stForm"])) > div:first-child 
     min-height:100vh;
 }
 
+/* Force ALL text in the left (non-form) column to be bright */
+div[data-testid="stColumn"]:not(:has([data-testid="stForm"])) * {
+    color:#f1f5f9 !important;
+}
+
 /* Remove white box from logo image container */
 div[data-testid="stColumn"]:not(:has([data-testid="stForm"])) [data-testid="stImage"],
-div[data-testid="stColumn"]:not(:has([data-testid="stForm"])) .stImage { background:transparent !important; box-shadow:none !important; }
+div[data-testid="stColumn"]:not(:has([data-testid="stForm"])) .stImage {
+    background:transparent !important;
+    box-shadow:none !important;
+}
 
-/* Right column: white card — only the column that contains the login form */
+/* Right column: white card */
 div[data-testid="stColumn"]:has([data-testid="stForm"]) > div:first-child {
     background:#ffffff;
     border-radius:20px;
@@ -109,6 +117,18 @@ div[data-testid="stColumn"]:has([data-testid="stForm"]) > div:first-child {
 div[data-testid="stColumn"]:has([data-testid="stForm"]) p,
 div[data-testid="stColumn"]:has([data-testid="stForm"]) label,
 div[data-testid="stColumn"]:has([data-testid="stForm"]) span { color:#334155 !important; }
+
+/* Hero title brightness */
+.hero-title { color:#ffffff !important; text-shadow:none !important; }
+
+/* Hero subtitle brightness */
+.hero-sub { color:#cbd5e1 !important; }
+
+/* Feature item title brightness */
+.feat-title { color:#f1f5f9 !important; }
+
+/* Feature item sub-text brightness */
+.feat-sub { color:#94a3b8 !important; }
 
 /* OAuth buttons */
 .oauth-btn {
@@ -141,49 +161,50 @@ div[data-testid="stColumn"]:has([data-testid="stForm"]) span { color:#334155 !im
 left, right = st.columns([1.15, 0.85], gap="medium")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# LEFT: logo via st.image, then small independent HTML blocks
+# LEFT: logo + hero content
 # ─────────────────────────────────────────────────────────────────────────────
 with left:
-    # Logo — st.image handles binary natively, no base64 in HTML
     if os.path.exists(_LOGO):
         st.image(_LOGO, width=140)
 
     # Badges
     st.markdown("""
 <div style="display:flex;flex-wrap:wrap;gap:8px;margin:1.2rem 0 1rem">
-  <span style="background:rgba(59,130,246,.25);color:#93c5fd;padding:4px 12px;
+  <span style="background:rgba(59,130,246,.25);color:#93c5fd !important;padding:4px 12px;
     border-radius:99px;font-size:.7rem;font-weight:700;letter-spacing:.05em">MULTI-ACCOUNT</span>
-  <span style="background:rgba(168,85,247,.25);color:#c4b5fd;padding:4px 12px;
+  <span style="background:rgba(168,85,247,.25);color:#c4b5fd !important;padding:4px 12px;
     border-radius:99px;font-size:.7rem;font-weight:700;letter-spacing:.05em">AI-POWERED</span>
-  <span style="background:rgba(16,185,129,.25);color:#6ee7b7;padding:4px 12px;
+  <span style="background:rgba(16,185,129,.25);color:#6ee7b7 !important;padding:4px 12px;
     border-radius:99px;font-size:.7rem;font-weight:700;letter-spacing:.05em">CIS · PCI · SOC2</span>
 </div>""", unsafe_allow_html=True)
 
-    # Headline + sub
+    # Headline
     st.markdown("""
-<h1 style="color:#ffffff !important;font-size:2.2rem;font-weight:800;line-height:1.2;margin:0 0 .7rem">
+<h1 class="hero-title" style="font-size:2.2rem;font-weight:800;line-height:1.2;margin:0 0 .7rem;
+  color:#ffffff !important;">
   Unified AWS Security<br>Audit Platform
 </h1>
-<p style="color:#94a3b8 !important;font-size:.95rem;line-height:1.7;margin-bottom:2rem">
+<p class="hero-sub" style="font-size:.95rem;line-height:1.7;margin-bottom:2rem;
+  color:#cbd5e1 !important;">
   Continuous compliance, AI-driven insights, and<br>
   actionable remediation across all your AWS accounts.
 </p>""", unsafe_allow_html=True)
 
-    # Feature items — each a small, isolated block
+    # Feature items
     FEATURES = [
-        ("rgba(59,130,246,.18)",  "🔍", "#f1f5f9", "Multi-account auditing",    "#94a3b8", "IAM, network, cost &amp; public exposure"),
-        ("rgba(168,85,247,.18)",  "🤖", "#f1f5f9", "AI-powered remediation",    "#94a3b8", "CLI &amp; CloudFormation fixes instantly"),
-        ("rgba(16,185,129,.18)",  "📋", "#f1f5f9", "Compliance scorecards",     "#94a3b8", "CIS, PCI-DSS, SOC 2, HIPAA, NIST 800-53"),
-        ("rgba(245,158,11,.18)",  "🔒", "#f1f5f9", "Zero credential storage",   "#94a3b8", "Role-based access — no AWS keys saved"),
+        ("rgba(59,130,246,.25)",  "🔍", "Multi-account auditing",    "IAM, network, cost &amp; public exposure"),
+        ("rgba(168,85,247,.25)",  "🤖", "AI-powered remediation",    "CLI &amp; CloudFormation fixes instantly"),
+        ("rgba(16,185,129,.25)",  "📋", "Compliance scorecards",     "CIS, PCI-DSS, SOC 2, HIPAA, NIST 800-53"),
+        ("rgba(245,158,11,.25)",  "🔒", "Zero credential storage",   "Role-based access — no AWS keys saved"),
     ]
-    for bg, icon, tc, title, sc, sub in FEATURES:
+    for bg, icon, title, sub in FEATURES:
         st.markdown(f"""
 <div style="display:flex;align-items:flex-start;gap:13px;margin-bottom:.9rem">
   <div style="width:36px;height:36px;border-radius:10px;background:{bg};flex-shrink:0;
     display:flex;align-items:center;justify-content:center;font-size:1rem">{icon}</div>
   <div>
-    <div style="color:{tc} !important;font-weight:600;font-size:.88rem">{title}</div>
-    <div style="color:{sc} !important;font-size:.8rem;margin-top:1px">{sub}</div>
+    <div class="feat-title" style="color:#f1f5f9 !important;font-weight:600;font-size:.9rem">{title}</div>
+    <div class="feat-sub" style="color:#94a3b8 !important;font-size:.81rem;margin-top:2px">{sub}</div>
   </div>
 </div>""", unsafe_allow_html=True)
 
@@ -208,7 +229,6 @@ with right:
   Sign in to your account or create a new one
 </p>""", unsafe_allow_html=True)
 
-    # OAuth buttons
     PROVIDERS = [
         ("google", "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",
          "Continue with Google"),
