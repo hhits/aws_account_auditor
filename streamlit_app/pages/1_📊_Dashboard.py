@@ -10,29 +10,82 @@ import db, audit_runner, ai_client
 
 st.set_page_config(page_title="Dashboard · AWS Auditor", page_icon="🛡️", layout="wide")
 
+if os.path.exists(_LOGO) and hasattr(st, "logo"):
+    st.logo(_LOGO, size="large")
+
 st.markdown("""
 <style>
-[data-testid="stSidebar"] { background:#0f172a; }
+[data-testid="stAppViewContainer"] { background:#f6f8fb; }
+.stMainBlockContainer.block-container {
+  max-width: 1540px;
+  padding-top: 2.2rem;
+  padding-left: 3.2rem;
+  padding-right: 3.2rem;
+}
+[data-testid="stSidebar"] { background:#0f172a; border-right:1px solid #1e293b; }
 [data-testid="stSidebar"] * { color:#e2e8f0 !important; }
-[data-testid="stSidebar"] .stButton button { background:#1e293b; border:1px solid #334155; color:#e2e8f0; border-radius:8px; }
+[data-testid="stSidebarNav"] { padding-top:.75rem; }
+[data-testid="stSidebarNav"] ul { padding-top:.35rem; }
+[data-testid="stSidebar"] .stButton button {
+  background:#1e293b; border:1px solid #334155; color:#e2e8f0;
+  border-radius:8px; min-height:42px; font-weight:650;
+}
+[data-testid="stSidebar"] .stButton button:hover { border-color:#60a5fa; background:#263449; }
+[data-testid="stSidebar"] [data-testid="stImage"] img {
+  background:#fff; border-radius:10px; padding:14px;
+}
+[data-testid="stHeader"] { background:transparent; }
+.block-container h4 {
+  color:#172033;
+  font-size:1.1rem;
+  letter-spacing:-.01em;
+}
+
+.dashboard-hero {
+  background:
+    radial-gradient(circle at 82% 20%, rgba(56,189,248,.18), transparent 32%),
+    linear-gradient(135deg,#0f172a 0%,#173457 100%);
+  color:white;
+  padding:1.25rem 1.45rem;
+  border-radius:10px;
+  margin-bottom:.85rem;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 16px 38px rgba(15,23,42,.13);
+}
+.dashboard-title {
+  margin:0;
+  font-size:1.65rem;
+  font-weight:800;
+  line-height:1.1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  letter-spacing:0;
+}
+.dashboard-subtitle {
+  margin:.45rem 0 0;
+  color:#cbd5e1;
+  font-size:.9rem;
+}
 
 .metric-card {
   background: white;
-  border-radius: 14px;
-  padding: 1.2rem 1.4rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,.08);
-  border-top: 4px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem 1.05rem;
+  box-shadow: 0 10px 24px rgba(15,23,42,.06);
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #e5e7eb;
   height: 100%;
 }
-.metric-card.critical { border-top-color: #dc2626; }
-.metric-card.high     { border-top-color: #f97316; }
-.metric-card.medium   { border-top-color: #eab308; }
-.metric-card.low      { border-top-color: #22c55e; }
-.metric-card.total    { border-top-color: #3b82f6; }
+.metric-card.critical { border-left-color: #dc2626; }
+.metric-card.high     { border-left-color: #f97316; }
+.metric-card.medium   { border-left-color: #eab308; }
+.metric-card.low      { border-left-color: #22c55e; }
+.metric-card.total    { border-left-color: #3b82f6; }
 .metric-label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
-                letter-spacing: .05em; color: #64748b; margin-bottom: 4px; }
-.metric-value { font-size: 2.4rem; font-weight: 800; color: #0f172a; line-height: 1; }
-.metric-sub   { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+                letter-spacing: .05em; color: #64748b; margin-bottom: 8px; }
+.metric-value { font-size: 2rem; font-weight: 800; color: #0f172a; line-height: 1; }
+.metric-sub   { font-size: 0.76rem; color: #94a3b8; margin-top: 8px; }
 
 .audit-row {
   background: white; border-radius: 12px; padding: 1rem 1.2rem;
@@ -49,9 +102,32 @@ st.markdown("""
 .badge-failed    { background:#fee2e2; color:#dc2626; }
 
 .ai-banner {
-  background: linear-gradient(135deg, #0f172a, #1e3a5f);
-  border-radius: 12px; padding: .8rem 1.2rem;
-  color: white; font-size: .85rem; margin-bottom: 1rem;
+  background:#fff;
+  border:1px solid #dbeafe;
+  border-left:4px solid #2563eb;
+  border-radius:8px; padding:.65rem .9rem;
+  color:#172033; font-size:.86rem; margin-bottom:.8rem;
+  box-shadow:0 8px 22px rgba(15,23,42,.05);
+}
+.chart-panel {
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  padding:.75rem .95rem .35rem;
+  box-shadow:0 10px 24px rgba(15,23,42,.05);
+}
+.risk-banner {
+  border-radius:8px;
+  padding:.78rem 1rem;
+  margin:.85rem 0 1rem;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+@media (max-width: 900px) {
+  .stMainBlockContainer.block-container { padding-left:1rem; padding-right:1rem; }
+  .dashboard-title { font-size:1.35rem; }
+  .metric-value { font-size:1.7rem; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -61,9 +137,9 @@ if not db.is_logged_in():
     st.switch_page("app.py")
 
 with st.sidebar:
-    if os.path.exists(_LOGO):
+    if os.path.exists(_LOGO) and not hasattr(st, "logo"):
         st.image(_LOGO, use_container_width=True)
-    else:
+    elif not os.path.exists(_LOGO):
         st.markdown("### 🛡️ AWS Auditor")
     st.markdown(f"**{st.session_state.get('user_email','')}**")
     st.divider()
@@ -72,12 +148,11 @@ with st.sidebar:
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("""
-<div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:white;
-            padding:2rem 2rem 1.5rem;border-radius:16px;margin-bottom:1.5rem">
-  <h1 style="margin:0;font-size:1.9rem;font-weight:800;display:flex;align-items:center;gap:10px">
+<div class="dashboard-hero">
+  <h1 class="dashboard-title">
     🛡️ AWS Audit Dashboard
   </h1>
-  <p style="margin:.5rem 0 0;color:#94a3b8;font-size:.95rem">
+  <p class="dashboard-subtitle">
     Multi-account · Security · Compliance · Cost · AI-Powered
   </p>
 </div>""", unsafe_allow_html=True)
@@ -90,7 +165,7 @@ config = db.get_config()
 ai_ok, ai_msg = ai_client.is_available()
 if ai_ok:
     provider = "Groq" if "Groq" in ai_msg else "Ollama"
-    st.markdown(f'<div class="ai-banner">🤖 <b>AI Active</b> — {ai_msg} &nbsp;|&nbsp; Go to the <b>AI</b> page for analysis &amp; chat</div>',
+    st.markdown(f'<div class="ai-banner">🤖 <b>AI Active</b> — {ai_msg} &nbsp;|&nbsp; Open the <b>AI</b> page for analysis and chat</div>',
                 unsafe_allow_html=True)
 
 # ── Action bar ────────────────────────────────────────────────────────────────
@@ -148,12 +223,13 @@ if latest:
   <div class="metric-sub">{sub}</div>
 </div>""", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<div style='height:.4rem'></div>", unsafe_allow_html=True)
 
     # ── Charts ────────────────────────────────────────────────────────────────
     col_bar, col_svc = st.columns(2)
 
     with col_bar:
+        st.markdown('<div class="chart-panel">', unsafe_allow_html=True)
         st.markdown("#### Findings by Severity")
         sev_data   = {k: sev.get(k, 0) for k in ["Critical", "High", "Medium", "Low"]}
         sev_colors = ["#dc2626", "#f97316", "#eab308", "#22c55e"]
@@ -167,14 +243,17 @@ if latest:
         ))
         fig.update_layout(
             showlegend=False,
-            margin=dict(t=10, b=0, l=0, r=0), height=260,
+            margin=dict(t=8, b=0, l=0, r=0), height=260,
             plot_bgcolor="white", paper_bgcolor="white",
-            xaxis=dict(showgrid=False, tickfont=dict(size=13)),
-            yaxis=dict(showgrid=True, gridcolor="#f1f5f9", zeroline=False),
+            font=dict(family="Arial, sans-serif", color="#64748b"),
+            xaxis=dict(showgrid=False, tickfont=dict(size=12, color="#64748b")),
+            yaxis=dict(showgrid=True, gridcolor="#eef2f7", zeroline=False, tickfont=dict(color="#64748b")),
         )
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, width="stretch")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col_svc:
+        st.markdown('<div class="chart-panel">', unsafe_allow_html=True)
         st.markdown("#### Top Services")
         svc = summary.get("by_service", {})
         if svc:
@@ -188,18 +267,19 @@ if latest:
             ))
             fig2.update_layout(
                 showlegend=False,
-                margin=dict(t=10, b=0, l=0, r=0), height=260,
+                margin=dict(t=8, b=0, l=0, r=0), height=260,
                 plot_bgcolor="white", paper_bgcolor="white",
-                xaxis=dict(showgrid=True, gridcolor="#f1f5f9"),
-                yaxis=dict(showgrid=False, tickfont=dict(size=12)),
+                font=dict(family="Arial, sans-serif", color="#64748b"),
+                xaxis=dict(showgrid=True, gridcolor="#eef2f7", zeroline=False, tickfont=dict(color="#64748b")),
+                yaxis=dict(showgrid=False, tickfont=dict(size=12, color="#64748b")),
             )
             st.plotly_chart(fig2, width="stretch")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # ── Overall risk indicator ─────────────────────────────────────────────────
     st.markdown(f"""
 <div style="background:{risk_color}18;border:1.5px solid {risk_color}40;
-            border-radius:10px;padding:.8rem 1.2rem;margin-bottom:1rem;
-            display:flex;align-items:center;gap:12px">
+            " class="risk-banner">
   <span style="width:12px;height:12px;border-radius:50%;background:{risk_color};
                display:inline-block;flex-shrink:0"></span>
   <span style="font-weight:700;color:{risk_color}">Overall Risk: {risk_label}</span>
